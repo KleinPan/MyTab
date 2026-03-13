@@ -1,25 +1,39 @@
-# MyTab Lite
+# MyTab Portal
 
-一个轻量版浏览器新标签页扩展（Chrome Manifest V3），风格参考 TopHub / iTab，并聚焦**单一热点数据源**。
+一个 iTab / 今日热榜风格的新标签页扩展（Chrome Manifest V3），支持多门户卡片流、开关控制和拖拽排序。
 
-## 功能
+## 主要能力
 
-- 热榜：默认尝试抓取 `tophub.today`（通过 `r.jina.ai` 代理文本化抓取），失败时自动回退示例数据。
-- 倒数日：本地持久化。
-- 待办事项：本地持久化，支持勾选完成和删除。
-- 图标卡：快捷导航，支持重置默认。
+- 热点聚合卡片墙（同时展示所有启用源）
+  - V2EX
+  - 虎嗅
+  - 36Kr
+  - IT之家
+  - 澎湃
+  - 财联社
+- 源配置
+  - 启用/禁用开关
+  - 拖拽排序（从上到下）
+  - 设置持久化到 `chrome.storage.local`
+- 倒数日
+- 待办事项
+- 快捷图标卡
 
-## 本地加载
+## 抓取策略
 
-1. 打开 Chrome 扩展管理页：`chrome://extensions`
-2. 开启“开发者模式”
-3. 选择“加载已解压的扩展程序”，指向本仓库目录
+直接抓取门户网站页面（通过 `r.jina.ai/http://目标站点` 进行文本抽取），不是抓取 TopHub。
 
-## 触发 CI 打包
+## 本地调试
 
-仓库包含 `Build Browser Extension` workflow，可通过以下方式触发：
+1. 打开 `chrome://extensions`
+2. 开启开发者模式
+3. 加载已解压扩展，选择本仓库目录
 
-- 在 GitHub Actions 页面手动触发 `workflow_dispatch`
-- 推送到 `main` 或提交 PR 时自动触发
+## CI 打包
 
-CI 会输出 `mytab-lite.zip` 产物，可直接用于安装验证。
+工作流：`Build Browser Extension`
+
+- `workflow_dispatch` 手动触发
+- 推送到 `main` 或提交 PR 自动触发
+
+产物：`mytab-lite.zip`
