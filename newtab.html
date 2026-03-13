@@ -9,64 +9,24 @@
   <body>
     <div class="bg mesh"></div>
     <main class="app-shell">
-      <header class="hero glass">
-        <div>
-          <h1>MyTab Portal</h1>
-          <p>今日热榜风格 · 多门户卡片流 · 可配置开关 + 拖拽排序</p>
-        </div>
-        <div class="hero-time">
-          <button id="toggleEdit" class="btn ghost">进入编辑模式</button>
-          <div id="today" class="today"></div>
-          <div id="clock" class="clock"></div>
-        </div>
-      </header>
+      <aside class="left-nav glass">
+        <h1>MyTab</h1>
+        <button class="menu-btn active" data-page="homePage">首页</button>
+        <button class="menu-btn" data-page="hotPage">热榜</button>
+        <button id="toggleEdit" class="btn ghost">进入编辑模式</button>
+      </aside>
 
-      <section class="layout-grid">
-        <section class="main-column">
-          <article class="glass panel">
-            <div class="panel-head">
-              <h2>热点聚合卡片墙</h2>
-              <div class="actions">
-                <button id="refreshHot" class="btn primary">刷新全部</button>
-                <button id="toggleConfig" class="btn ghost">源配置</button>
-              </div>
+      <section class="main-area">
+        <section id="homePage" class="page active">
+          <header class="hero glass">
+            <div>
+              <h2 id="clock" class="clock"></h2>
+              <p id="today" class="today"></p>
             </div>
-            <p class="panel-tip">展示所有启用数据源，排序由「源配置」拖拽决定。</p>
-            <div id="hotCards" class="hot-cards"></div>
-          </article>
-        </section>
-
-        <aside class="side-column">
-          <article id="sourceConfig" class="glass panel hidden">
-            <div class="panel-head"><h2>数据源配置</h2></div>
-            <p class="panel-tip">✅ 启用/停用 · ☰ 拖拽排序（从上到下）</p>
-            <ul id="sourceConfigList" class="source-config-list"></ul>
-          </article>
+          </header>
 
           <article class="glass panel">
-            <div class="panel-head"><h2>倒数日</h2></div>
-            <form id="countdownForm" class="row-form edit-only hidden">
-              <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
-              <input id="countdownDate" type="date" required />
-              <button class="btn primary" type="submit">保存</button>
-            </form>
-            <div id="countdownResult" class="countdown-value">暂无倒数日</div>
-          </article>
-
-          <article class="glass panel">
-            <div class="panel-head"><h2>待办事项</h2></div>
-            <form id="todoForm" class="row-form edit-only hidden">
-              <input id="todoInput" maxlength="80" required placeholder="添加一条待办" />
-              <button class="btn primary" type="submit">添加</button>
-            </form>
-            <ul id="todoList" class="todo-list"></ul>
-          </article>
-
-          <article class="glass panel">
-            <div class="panel-head">
-              <h2>快捷图标卡</h2>
-              <button id="resetLinks" class="btn ghost edit-only hidden">重置</button>
-            </div>
+            <div class="panel-head"><h3>快捷入口</h3><button id="resetLinks" class="btn ghost edit-only hidden">重置</button></div>
             <form id="linkForm" class="row-form edit-only hidden">
               <input id="linkTitle" maxlength="20" required placeholder="名称" />
               <input id="linkUrl" type="url" required placeholder="https://example.com" />
@@ -75,7 +35,48 @@
             </form>
             <div id="linkGrid" class="link-grid"></div>
           </article>
-        </aside>
+
+          <section class="home-widgets">
+            <article class="glass panel">
+              <div class="panel-head"><h3>倒数日</h3></div>
+              <form id="countdownForm" class="row-form edit-only hidden">
+                <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
+                <input id="countdownDate" type="date" required />
+                <button class="btn primary" type="submit">保存</button>
+              </form>
+              <div id="countdownResult" class="countdown-value">暂无倒数日</div>
+            </article>
+
+            <article class="glass panel">
+              <div class="panel-head"><h3>待办事项</h3></div>
+              <form id="todoForm" class="row-form edit-only hidden">
+                <input id="todoInput" maxlength="80" required placeholder="添加一条待办" />
+                <button class="btn primary" type="submit">添加</button>
+              </form>
+              <ul id="todoList" class="todo-list"></ul>
+            </article>
+          </section>
+        </section>
+
+        <section id="hotPage" class="page">
+          <article class="glass panel">
+            <div class="panel-head">
+              <h3>热点聚合卡片墙</h3>
+              <div class="actions">
+                <button id="refreshHot" class="btn primary">刷新全部</button>
+                <button id="toggleConfig" class="btn ghost">源配置</button>
+              </div>
+            </div>
+            <p class="panel-tip">优先展示缓存，后台刷新；每个源最多显示 20 条。</p>
+            <div id="hotCards" class="hot-cards"></div>
+          </article>
+
+          <article id="sourceConfig" class="glass panel hidden">
+            <div class="panel-head"><h3>数据源配置</h3></div>
+            <p class="panel-tip">✅ 启用/停用 · ☰ 拖拽排序（从上到下）</p>
+            <ul id="sourceConfigList" class="source-config-list"></ul>
+          </article>
+        </section>
       </section>
     </main>
 
