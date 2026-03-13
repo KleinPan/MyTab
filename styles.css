@@ -26,6 +26,7 @@ body {
 .hero { padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .hero h1 { margin: 0; font-size: 32px; }
 .hero p { margin: 7px 0 0; color: var(--muted); }
+.hero-time { display: grid; justify-items: end; gap: 6px; }
 .today { color: var(--muted); text-align: right; }
 .clock { font-size: 38px; font-weight: 700; letter-spacing: 1px; text-align: right; }
 .layout-grid { display: grid; grid-template-columns: 1.75fr 1fr; gap: 14px; }
@@ -40,7 +41,8 @@ body {
 .btn.danger { background: rgba(239, 68, 68, 0.88); }
 .row-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 input { background: rgba(15, 23, 42, 0.55); color: var(--txt); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; }
-.hidden { display: none; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
 .source-config-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .source-config-item {
   display: grid;
@@ -80,9 +82,10 @@ input { background: rgba(15, 23, 42, 0.55); color: var(--txt); border: 1px solid
 .todo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .todo-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .todo-item label { display: flex; gap: 8px; }
-.todo-item input:checked + span { color: var(--muted); text-decoration: line-through; }
+.todo-item input:checked + span, .todo-item.done span { color: var(--muted); text-decoration: line-through; }
 .countdown-value { font-size: 24px; font-weight: 700; color: #c4b5fd; }
 .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.link-card-wrap { display: grid; gap: 6px; }
 .link-card {
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 12px;
@@ -97,4 +100,5 @@ input { background: rgba(15, 23, 42, 0.55); color: var(--txt); border: 1px solid
 }
 .link-badge { font-size: 20px; }
 .link-title { font-size: 13px; color: #cbd5e1; }
+.link-delete { width: 100%; }
 @media (max-width: 1200px) { .layout-grid { grid-template-columns: 1fr; } }

@@ -15,6 +15,7 @@
           <p>今日热榜风格 · 多门户卡片流 · 可配置开关 + 拖拽排序</p>
         </div>
         <div class="hero-time">
+          <button id="toggleEdit" class="btn ghost">进入编辑模式</button>
           <div id="today" class="today"></div>
           <div id="clock" class="clock"></div>
         </div>
@@ -44,7 +45,7 @@
 
           <article class="glass panel">
             <div class="panel-head"><h2>倒数日</h2></div>
-            <form id="countdownForm" class="row-form">
+            <form id="countdownForm" class="row-form edit-only hidden">
               <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
               <input id="countdownDate" type="date" required />
               <button class="btn primary" type="submit">保存</button>
@@ -54,7 +55,7 @@
 
           <article class="glass panel">
             <div class="panel-head"><h2>待办事项</h2></div>
-            <form id="todoForm" class="row-form">
+            <form id="todoForm" class="row-form edit-only hidden">
               <input id="todoInput" maxlength="80" required placeholder="添加一条待办" />
               <button class="btn primary" type="submit">添加</button>
             </form>
@@ -64,8 +65,14 @@
           <article class="glass panel">
             <div class="panel-head">
               <h2>快捷图标卡</h2>
-              <button id="resetLinks" class="btn ghost">重置</button>
+              <button id="resetLinks" class="btn ghost edit-only hidden">重置</button>
             </div>
+            <form id="linkForm" class="row-form edit-only hidden">
+              <input id="linkTitle" maxlength="20" required placeholder="名称" />
+              <input id="linkUrl" type="url" required placeholder="https://example.com" />
+              <input id="linkIcon" maxlength="2" placeholder="图标" />
+              <button class="btn primary" type="submit">新增</button>
+            </form>
             <div id="linkGrid" class="link-grid"></div>
           </article>
         </aside>
@@ -80,10 +87,13 @@
     </template>
 
     <template id="linkCardTemplate">
-      <a class="link-card" target="_blank" rel="noreferrer noopener">
-        <span class="link-badge"></span>
-        <span class="link-title"></span>
-      </a>
+      <div class="link-card-wrap">
+        <a class="link-card" target="_blank" rel="noreferrer noopener">
+          <span class="link-badge"></span>
+          <span class="link-title"></span>
+        </a>
+        <button class="btn danger link-delete edit-only hidden" type="button">删除</button>
+      </div>
     </template>
 
     <script type="module" src="newtab.js"></script>

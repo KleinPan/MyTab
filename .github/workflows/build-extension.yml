@@ -19,7 +19,7 @@ jobs:
       - name: Package extension
         run: |
           mkdir -p dist
-          zip -r dist/mytab-lite.zip manifest.json newtab.html newtab.js styles.css
+          zip -j dist/mytab-lite.zip manifest.json newtab.html newtab.js styles.css README.md
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
