@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "MyTab Portal",
+  "version": "0.2.0",
+  "description": "iTab-inspired new tab page with portal hot lists, countdown, todo and quick cards.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.zhihu.com/*",
+    "https://api.bilibili.com/*",
+    "https://weibo.com/*",
+    "https://www.cls.cn/*",
+    "https://*.ithome.com/*"
+  ]
+}
