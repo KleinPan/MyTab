@@ -3,85 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MyTab Portal</title>
+    <title>MyTab Lite</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="bg-orb orb-a"></div>
-    <div class="bg-orb orb-b"></div>
-    <main class="app">
-      <header class="topbar glass">
+    <main class="layout">
+      <header class="hero card">
         <div>
-          <h1>MyTab Portal</h1>
-          <p>可配置开关 + 拖拽排序 + 门户热榜卡片墙</p>
+          <h1>MyTab Lite</h1>
+          <p>一个简洁的新标签页：热点 + 倒数日 + 待办 + 快捷图标卡。</p>
         </div>
-        <div class="topbar-right">
-          <div id="today" class="today"></div>
-          <div id="clock" class="clock"></div>
-        </div>
+        <div id="clock" class="clock" aria-label="当前时间">--:--</div>
       </header>
 
-      <section class="content-grid">
-        <section class="glass panel hot-panel">
-          <div class="panel-head">
-            <h2>门户热点（卡片流）</h2>
-            <div class="actions">
-              <button id="refreshHot" class="btn primary">刷新全部</button>
-              <button id="toggleConfig" class="btn ghost">源配置</button>
-            </div>
+      <section class="grid">
+        <article class="card hot-list">
+          <div class="card-title-row">
+            <h2>TopHub 热榜（单数据源）</h2>
+            <button id="refreshHot" class="btn">刷新</button>
           </div>
-          <div id="sourceConfig" class="source-config hidden">
-            <p class="muted">勾选控制显示；拖拽条目调整卡片顺序。</p>
-            <ul id="sourceConfigList" class="source-config-list"></ul>
+          <p class="hint">默认抓取 TopHub 页面；若网络受限，会回退到内置示例数据。</p>
+          <ul id="hotList"></ul>
+        </article>
+
+        <article class="card countdown">
+          <h2>倒数日</h2>
+          <form id="countdownForm" class="inline-form">
+            <input id="countdownTitle" required maxlength="32" placeholder="例如：发布日" />
+            <input id="countdownDate" required type="date" />
+            <button class="btn" type="submit">保存</button>
+          </form>
+          <div id="countdownResult" class="result">暂无倒数日</div>
+        </article>
+
+        <article class="card todo">
+          <h2>待办事项</h2>
+          <form id="todoForm" class="inline-form">
+            <input id="todoInput" required maxlength="80" placeholder="输入待办并回车" />
+            <button class="btn" type="submit">添加</button>
+          </form>
+          <ul id="todoList"></ul>
+        </article>
+
+        <article class="card links">
+          <div class="card-title-row">
+            <h2>图标卡（快捷导航）</h2>
+            <button id="resetLinks" class="btn ghost">重置默认</button>
           </div>
-          <div id="hotCards" class="hot-cards"></div>
-        </section>
-
-        <section class="right-stack">
-          <article class="glass panel">
-            <div class="panel-head"><h2>倒数日</h2></div>
-            <form id="countdownForm" class="row-form">
-              <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
-              <input id="countdownDate" type="date" required />
-              <button class="btn primary" type="submit">保存</button>
-            </form>
-            <div id="countdownResult" class="countdown-value">暂无倒数日</div>
-          </article>
-
-          <article class="glass panel">
-            <div class="panel-head"><h2>待办事项</h2></div>
-            <form id="todoForm" class="row-form">
-              <input id="todoInput" maxlength="80" required placeholder="添加一条待办" />
-              <button class="btn primary" type="submit">添加</button>
-            </form>
-            <ul id="todoList" class="todo-list"></ul>
-          </article>
-
-          <article class="glass panel">
-            <div class="panel-head">
-              <h2>快捷图标卡</h2>
-              <button id="resetLinks" class="btn ghost">重置</button>
-            </div>
-            <div id="linkGrid" class="link-grid"></div>
-          </article>
-        </section>
+          <p class="hint">支持编辑名称和链接，自动保存在本地。</p>
+          <div id="linkGrid" class="link-grid"></div>
+        </article>
       </section>
     </main>
 
     <template id="todoItemTemplate">
       <li class="todo-item">
-        <label><input type="checkbox" /><span></span></label>
+        <label>
+          <input type="checkbox" />
+          <span></span>
+        </label>
         <button class="btn danger" type="button">删除</button>
       </li>
     </template>
 
     <template id="linkCardTemplate">
-      <a class="link-card" target="_blank" rel="noreferrer noopener">
-        <span class="link-badge"></span>
-        <span class="link-title"></span>
-      </a>
+      <a class="link-card" target="_blank" rel="noreferrer"></a>
     </template>
 
-    <script type="module" src="newtab.js"></script>
+    <script src="newtab.js" type="module"></script>
   </body>
 </html>
