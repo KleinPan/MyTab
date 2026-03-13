@@ -2,43 +2,54 @@ const storage = chrome?.storage?.local;
 const qs = (id) => document.getElementById(id);
 
 const HOT_LIMIT = 20;
+const HOT_CACHE_TTL_MS = 10 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 6500;
 
 const SOURCE_DEFS = [
   {
     id: 'v2ex',
     name: 'V2EX',
     siteUrl: 'https://www.v2ex.com',
-    fetchUrls: ['https://r.jina.ai/http://www.v2ex.com/?tab=hot', 'https://r.jina.ai/http://www.v2ex.com/?tab=all']
+    fetchUrls: ['https://r.jina.ai/http://www.v2ex.com/?tab=hot', 'https://r.jina.ai/http://www.v2ex.com/?tab=all'],
+    includePath: [/^\/t\//],
+    excludeTitle: [/^v2ex$/i, /^reply/i]
   },
   {
     id: 'huxiu',
     name: '虎嗅',
     siteUrl: 'https://www.huxiu.com',
-    fetchUrls: ['https://r.jina.ai/http://www.huxiu.com/channel/0.html', 'https://r.jina.ai/http://www.huxiu.com/']
+    fetchUrls: ['https://r.jina.ai/http://www.huxiu.com/channel/0.html', 'https://r.jina.ai/http://www.huxiu.com/'],
+    includePath: [/^\/article\//],
+    excludeTitle: [/虎嗅网?$/, /^下载虎嗅/i]
   },
   {
     id: 'kr36',
     name: '36Kr',
     siteUrl: 'https://36kr.com',
-    fetchUrls: ['https://r.jina.ai/http://36kr.com/newsflashes/catalog/2', 'https://r.jina.ai/http://36kr.com/']
+    fetchUrls: ['https://r.jina.ai/http://36kr.com/newsflashes/catalog/2', 'https://r.jina.ai/http://36kr.com/'],
+    includePath: [/^\/p\//, /^\/newsflashes\//]
   },
   {
     id: 'ithome',
     name: 'IT之家',
     siteUrl: 'https://www.ithome.com',
-    fetchUrls: ['https://r.jina.ai/http://www.ithome.com/list/', 'https://r.jina.ai/http://www.ithome.com/']
+    fetchUrls: ['https://r.jina.ai/http://www.ithome.com/list/', 'https://r.jina.ai/http://www.ithome.com/'],
+    includePath: [/\/\d+\.htm$/],
+    excludePath: [/^\/html\/$/]
   },
   {
     id: 'thepaper',
     name: '澎湃',
     siteUrl: 'https://www.thepaper.cn',
-    fetchUrls: ['https://r.jina.ai/http://www.thepaper.cn/channel_25950', 'https://r.jina.ai/http://www.thepaper.cn/']
+    fetchUrls: ['https://r.jina.ai/http://www.thepaper.cn/channel_25950', 'https://r.jina.ai/http://www.thepaper.cn/'],
+    includePath: [/^\/newsDetail_forward_/, /^\/detail_forward_/]
   },
   {
     id: 'cls',
     name: '财联社',
     siteUrl: 'https://www.cls.cn',
-    fetchUrls: ['https://r.jina.ai/http://www.cls.cn/depth', 'https://r.jina.ai/http://www.cls.cn/']
+    fetchUrls: ['https://r.jina.ai/http://www.cls.cn/depth', 'https://r.jina.ai/http://www.cls.cn/'],
+    includePath: [/^\/detail\//, /^\/article\//]
   }
 ];
 
@@ -84,21 +95,34 @@ async function setStored(payload) {
   if (storage) await storage.set(payload);
 }
 
-function isLikelyContentLink(urlObj, title) {
-  if (!title || title.length < 5) return false;
+function normalizeTitle(raw = '') {
+  return raw
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[[^\]]*\]\([^)]*\)/g, (x) => x.replace(/\[[^\]]*\]\(([^)]*)\)/, '$1'))
+    .replace(/^\s*#+\s*/g, '')
+    .replace(/^\s*[\-*>]\s*/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isLikelyContentLink(urlObj, title, source) {
+  if (!title || title.length < 6) return false;
   if (['/', '', '/index.html'].includes(urlObj.pathname)) return false;
-  if (/(登录|注册|下载|隐私|关于我们|联系我们|反馈|APP|客户端|招聘)/i.test(title)) return false;
+  if (/(登录|注册|下载|隐私|关于我们|联系我们|反馈|APP|客户端|招聘|广告)/i.test(title)) return false;
+  if (source.excludeTitle?.some((rule) => rule.test(title))) return false;
+  if (source.includePath?.length && !source.includePath.some((rule) => rule.test(urlObj.pathname))) return false;
+  if (source.excludePath?.some((rule) => rule.test(urlObj.pathname))) return false;
   return true;
 }
 
-function parseJinaLinks(markdown, siteUrl) {
-  const domain = new URL(siteUrl).hostname.replace(/^www\./, '');
+function parseJinaLinks(markdown, source) {
+  const domain = new URL(source.siteUrl).hostname.replace(/^www\./, '');
   const patterns = [/\[(.*?)\]\((https?:\/\/[^)]+)\)/g, /^\d+\.\s+\[(.+?)\]\((https?:\/\/[^)]+)\)/gm];
   const dedup = new Map();
 
   for (const pattern of patterns) {
     for (const [, rawTitle, rawUrl] of markdown.matchAll(pattern)) {
-      const title = rawTitle.trim().replace(/\s+/g, ' ');
+      const title = normalizeTitle(rawTitle);
       const url = rawUrl.trim();
 
       let parsed;
@@ -109,7 +133,7 @@ function parseJinaLinks(markdown, siteUrl) {
       }
 
       if (!parsed.hostname.replace(/^www\./, '').endsWith(domain)) continue;
-      if (!isLikelyContentLink(parsed, title)) continue;
+      if (!isLikelyContentLink(parsed, title, source)) continue;
 
       const normalizedUrl = parsed.toString();
       if (!dedup.has(normalizedUrl)) dedup.set(normalizedUrl, { title, url: normalizedUrl });
@@ -192,9 +216,27 @@ function renderHotCards() {
     const status = sourceStatus[source.id] || '待刷新';
     const card = document.createElement('article');
     card.className = 'hot-card';
-    card.innerHTML = `<div class="hot-card-head"><h3>${source.name}</h3><span class="hot-meta">${status}</span></div><ol>${rows}</ol>`;
+    card.innerHTML = `<div class="hot-card-head"><h4>${source.name}</h4><span class="hot-meta">${status}</span></div><ol>${rows}</ol>`;
     wrap.appendChild(card);
   });
+}
+
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { cache: 'no-store', signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function writeSourceCache(source, items, fromCache = false) {
+  sourceCache[source.id] = items.slice(0, HOT_LIMIT);
+  const now = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  sourceStatus[source.id] = sourceCache[source.id].length
+    ? `${sourceCache[source.id].length} 条 · ${fromCache ? '缓存' : '更新'} ${now}`
+    : `抓取失败 · ${now}`;
 }
 
 async function loadOneSource(source) {
@@ -202,10 +244,10 @@ async function loadOneSource(source) {
 
   for (const fetchUrl of source.fetchUrls) {
     try {
-      const res = await fetch(fetchUrl, { cache: 'no-store' });
+      const res = await fetchWithTimeout(fetchUrl);
       if (!res.ok) continue;
       const text = await res.text();
-      const parsed = parseJinaLinks(text, source.siteUrl);
+      const parsed = parseJinaLinks(text, source);
       merged = [...merged, ...parsed];
       const dedup = new Map(merged.map((x) => [x.url, x]));
       merged = [...dedup.values()];
@@ -215,17 +257,40 @@ async function loadOneSource(source) {
     }
   }
 
-  sourceCache[source.id] = merged.slice(0, HOT_LIMIT);
-  sourceStatus[source.id] =
-    merged.length > 0
-      ? `${sourceCache[source.id].length} 条 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`
-      : `抓取失败 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+  writeSourceCache(source, merged);
+  return { id: source.id, items: sourceCache[source.id], fetchedAt: Date.now(), status: sourceStatus[source.id] };
+}
+
+async function loadCachedHot() {
+  const { hotCache = {} } = await getStored(['hotCache']);
+  const now = Date.now();
+  let used = false;
+  getEnabledSources().forEach((source) => {
+    const saved = hotCache[source.id];
+    if (!saved?.items?.length) return;
+    if (now - saved.fetchedAt > HOT_CACHE_TTL_MS) return;
+    writeSourceCache(source, saved.items, true);
+    used = true;
+  });
+
+  if (used) renderHotCards();
 }
 
 async function loadAllHot() {
-  qs('hotCards').innerHTML = '<div class="empty">正在抓取门户热点...</div>';
   const enabled = getEnabledSources();
-  await Promise.all(enabled.map(loadOneSource));
+  if (!enabled.length) {
+    renderHotCards();
+    return;
+  }
+
+  if (!Object.keys(sourceCache).length) qs('hotCards').innerHTML = '<div class="empty">正在抓取门户热点...</div>';
+
+  const loaded = await Promise.all(enabled.map(loadOneSource));
+  const { hotCache = {} } = await getStored(['hotCache']);
+  loaded.forEach((x) => {
+    hotCache[x.id] = x;
+  });
+  await setStored({ hotCache });
   renderHotCards();
 }
 
@@ -320,6 +385,17 @@ function setEditMode(nextMode) {
   });
 }
 
+function initNavigation() {
+  document.querySelectorAll('.menu-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.menu-btn').forEach((item) => item.classList.remove('active'));
+      document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
+      btn.classList.add('active');
+      qs(btn.dataset.page).classList.add('active');
+    });
+  });
+}
+
 qs('toggleEdit').addEventListener('click', async () => {
   setEditMode(!editMode);
   await setStored({ editMode });
@@ -381,11 +457,13 @@ qs('resetLinks').addEventListener('click', async () => {
     'editMode'
   ]);
 
+  initNavigation();
   normalizeSettings(saved);
   renderSourceConfig();
   renderCountdown(countdown);
   renderTodos(todos);
   renderLinks(links);
   setEditMode(savedEditMode);
-  await loadAllHot();
+  await loadCachedHot();
+  loadAllHot();
 })();
