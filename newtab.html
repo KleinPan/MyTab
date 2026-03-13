@@ -9,12 +9,11 @@
   <body>
     <div class="bg-orb orb-a"></div>
     <div class="bg-orb orb-b"></div>
-
     <main class="app">
       <header class="topbar glass">
         <div>
           <h1>MyTab Portal</h1>
-          <p>门户热榜 + 倒数日 + 待办 + 快捷卡片</p>
+          <p>可配置开关 + 拖拽排序 + 门户热榜卡片墙</p>
         </div>
         <div class="topbar-right">
           <div id="today" class="today"></div>
@@ -25,18 +24,22 @@
       <section class="content-grid">
         <section class="glass panel hot-panel">
           <div class="panel-head">
-            <h2>门户热点聚合</h2>
-            <button id="refreshHot" class="btn primary">刷新全部</button>
+            <h2>门户热点（卡片流）</h2>
+            <div class="actions">
+              <button id="refreshHot" class="btn primary">刷新全部</button>
+              <button id="toggleConfig" class="btn ghost">源配置</button>
+            </div>
           </div>
-          <div id="sourceTabs" class="source-tabs"></div>
-          <ul id="hotList" class="hot-list"></ul>
+          <div id="sourceConfig" class="source-config hidden">
+            <p class="muted">勾选控制显示；拖拽条目调整卡片顺序。</p>
+            <ul id="sourceConfigList" class="source-config-list"></ul>
+          </div>
+          <div id="hotCards" class="hot-cards"></div>
         </section>
 
         <section class="right-stack">
           <article class="glass panel">
-            <div class="panel-head">
-              <h2>倒数日</h2>
-            </div>
+            <div class="panel-head"><h2>倒数日</h2></div>
             <form id="countdownForm" class="row-form">
               <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
               <input id="countdownDate" type="date" required />
@@ -67,10 +70,7 @@
 
     <template id="todoItemTemplate">
       <li class="todo-item">
-        <label>
-          <input type="checkbox" />
-          <span></span>
-        </label>
+        <label><input type="checkbox" /><span></span></label>
         <button class="btn danger" type="button">删除</button>
       </li>
     </template>

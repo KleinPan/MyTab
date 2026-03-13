@@ -1,65 +1,51 @@
 const storage = chrome?.storage?.local;
 const qs = (id) => document.getElementById(id);
 
-const PORTAL_SOURCES = [
-  {
-    id: 'zhihu',
-    name: '知乎热榜',
-    async fetcher() {
-      const res = await fetch('https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=12');
-      if (!res.ok) throw new Error('知乎接口失败');
-      const data = await res.json();
-      return (data.data || []).slice(0, 12).map((item) => ({
-        title: item.target?.title || '知乎热点',
-        url: `https://www.zhihu.com/question/${item.target?.id}`
-      }));
-    }
-  },
-  {
-    id: 'bilibili',
-    name: 'B站热门',
-    async fetcher() {
-      const res = await fetch('https://api.bilibili.com/x/web-interface/ranking/v2?rid=0&type=all');
-      if (!res.ok) throw new Error('B站接口失败');
-      const data = await res.json();
-      return (data.data?.list || []).slice(0, 12).map((item) => ({
-        title: item.title,
-        url: `https://www.bilibili.com/video/${item.bvid}`
-      }));
-    }
-  },
-  {
-    id: 'weibo',
-    name: '微博热搜',
-    async fetcher() {
-      const res = await fetch('https://weibo.com/ajax/side/hotSearch');
-      if (!res.ok) throw new Error('微博接口失败');
-      const data = await res.json();
-      return (data.data?.realtime || []).slice(0, 12).map((item) => ({
-        title: item.word,
-        url: `https://s.weibo.com/weibo?q=${encodeURIComponent(item.word)}`
-      }));
-    }
-  }
+const SOURCE_DEFS = [
+  { id: 'v2ex', name: 'V2EX', siteUrl: 'https://www.v2ex.com', fetchUrl: 'https://r.jina.ai/http://www.v2ex.com/' },
+  { id: 'huxiu', name: '虎嗅', siteUrl: 'https://www.huxiu.com', fetchUrl: 'https://r.jina.ai/http://www.huxiu.com/' },
+  { id: 'kr36', name: '36Kr', siteUrl: 'https://36kr.com', fetchUrl: 'https://r.jina.ai/http://36kr.com/' },
+  { id: 'ithome', name: 'IT之家', siteUrl: 'https://www.ithome.com', fetchUrl: 'https://r.jina.ai/http://www.ithome.com/' },
+  { id: 'thepaper', name: '澎湃', siteUrl: 'https://www.thepaper.cn', fetchUrl: 'https://r.jina.ai/http://www.thepaper.cn/' },
+  { id: 'cls', name: '财联社', siteUrl: 'https://www.cls.cn', fetchUrl: 'https://r.jina.ai/http://www.cls.cn/' }
 ];
 
-const FALLBACK_BY_SOURCE = {
-  zhihu: [{ title: '知乎示例热点', url: 'https://www.zhihu.com/hot' }],
-  bilibili: [{ title: 'B站示例热点', url: 'https://www.bilibili.com' }],
-  weibo: [{ title: '微博示例热搜', url: 'https://s.weibo.com/top/summary' }]
+const FALLBACK_ITEMS = {
+  v2ex: [{ title: 'V2EX 首页', url: 'https://www.v2ex.com' }],
+  huxiu: [{ title: '虎嗅首页', url: 'https://www.huxiu.com' }],
+  kr36: [{ title: '36Kr 首页', url: 'https://36kr.com' }],
+  ithome: [{ title: 'IT之家首页', url: 'https://www.ithome.com' }],
+  thepaper: [{ title: '澎湃首页', url: 'https://www.thepaper.cn' }],
+  cls: [{ title: '财联社首页', url: 'https://www.cls.cn' }]
 };
 
 const DEFAULT_LINKS = [
   { title: 'GitHub', url: 'https://github.com', icon: '🐙' },
-  { title: '掘金', url: 'https://juejin.cn', icon: '⚡' },
-  { title: '少数派', url: 'https://sspai.com', icon: '📰' },
   { title: 'V2EX', url: 'https://www.v2ex.com', icon: '💬' },
-  { title: '即刻', url: 'https://web.okjike.com', icon: '🌟' },
-  { title: 'Product Hunt', url: 'https://www.producthunt.com', icon: '🚀' }
+  { title: '虎嗅', url: 'https://www.huxiu.com', icon: '📰' },
+  { title: '36Kr', url: 'https://36kr.com', icon: '📈' },
+  { title: 'IT之家', url: 'https://www.ithome.com', icon: '💻' },
+  { title: '澎湃', url: 'https://www.thepaper.cn', icon: '🌊' }
 ];
 
+let sourceSettings = SOURCE_DEFS.map((s, idx) => ({ id: s.id, enabled: true, order: idx }));
 let sourceCache = {};
-let activeSource = PORTAL_SOURCES[0].id;
+
+function settingsSorted() {
+  return [...sourceSettings].sort((a, b) => a.order - b.order);
+}
+
+function normalizeSettings(saved) {
+  if (!Array.isArray(saved) || !saved.length) return sourceSettings;
+  const byId = Object.fromEntries(saved.map((x) => [x.id, x]));
+  sourceSettings = SOURCE_DEFS.map((s, idx) => ({
+    id: s.id,
+    enabled: byId[s.id]?.enabled ?? true,
+    order: Number.isFinite(byId[s.id]?.order) ? byId[s.id].order : idx
+  }));
+  sourceSettings = settingsSorted().map((s, idx) => ({ ...s, order: idx }));
+  return sourceSettings;
+}
 
 function updateClock() {
   const now = new Date();
@@ -78,55 +64,122 @@ async function setStored(payload) {
   return storage.set(payload);
 }
 
-function renderTabs() {
-  const tabs = qs('sourceTabs');
-  tabs.innerHTML = '';
-  PORTAL_SOURCES.forEach((s) => {
-    const tab = document.createElement('button');
-    tab.className = `source-tab ${s.id === activeSource ? 'active' : ''}`;
-    tab.textContent = s.name;
-    tab.addEventListener('click', () => {
-      activeSource = s.id;
-      renderTabs();
-      renderHotList(sourceCache[activeSource] || FALLBACK_BY_SOURCE[activeSource], s.name);
-    });
-    tabs.appendChild(tab);
-  });
+function parseJinaLinks(markdown, siteUrl) {
+  const matches = [...markdown.matchAll(/\[(.*?)\]\((https?:\/\/[^)]+)\)/g)];
+  const dedup = new Map();
+  for (const [, rawTitle, rawUrl] of matches) {
+    const title = rawTitle.trim();
+    const url = rawUrl.trim();
+    if (!title || title.length < 6) continue;
+    if (!url.startsWith(siteUrl)) continue;
+    if (title.includes('登录') || title.includes('注册') || title.includes('下载')) continue;
+    if (!dedup.has(url)) dedup.set(url, { title, url });
+    if (dedup.size >= 10) break;
+  }
+  return [...dedup.values()];
 }
 
-function renderHotList(items, sourceName) {
-  const list = qs('hotList');
+function getEnabledSources() {
+  const enabled = new Set(sourceSettings.filter((s) => s.enabled).map((s) => s.id));
+  return settingsSorted().map((s) => SOURCE_DEFS.find((d) => d.id === s.id)).filter((d) => enabled.has(d.id));
+}
+
+function renderSourceConfig() {
+  const list = qs('sourceConfigList');
   list.innerHTML = '';
-  items.forEach((item, idx) => {
+  settingsSorted().forEach((setting) => {
+    const source = SOURCE_DEFS.find((s) => s.id === setting.id);
     const li = document.createElement('li');
-    li.className = 'hot-item';
-    li.innerHTML = `<span class="rank">${idx + 1}</span><a href="${item.url}" target="_blank" rel="noreferrer noopener">${item.title}</a><span class="source-tag">${sourceName}</span>`;
+    li.className = 'source-config-item';
+    li.draggable = true;
+    li.dataset.sourceId = source.id;
+    li.innerHTML = `
+      <span class="drag-handle">☰</span>
+      <label><input type="checkbox" ${setting.enabled ? 'checked' : ''}/> ${source.name}</label>
+      <span class="muted">${source.siteUrl.replace('https://', '')}</span>
+    `;
+
+    li.addEventListener('dragstart', (e) => {
+      e.dataTransfer?.setData('text/plain', source.id);
+      li.classList.add('dragging');
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    li.addEventListener('dragover', (e) => e.preventDefault());
+    li.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const dragId = e.dataTransfer?.getData('text/plain');
+      const targetId = source.id;
+      if (!dragId || dragId === targetId) return;
+      const ids = settingsSorted().map((x) => x.id);
+      const from = ids.indexOf(dragId);
+      const to = ids.indexOf(targetId);
+      ids.splice(to, 0, ids.splice(from, 1)[0]);
+      sourceSettings = ids.map((id, idx) => {
+        const old = sourceSettings.find((x) => x.id === id);
+        return { id, enabled: old?.enabled ?? true, order: idx };
+      });
+      await setStored({ sourceSettings });
+      renderSourceConfig();
+      renderHotCards();
+    });
+
+    li.querySelector('input').addEventListener('change', async (e) => {
+      const checked = e.target.checked;
+      sourceSettings = sourceSettings.map((x) => (x.id === source.id ? { ...x, enabled: checked } : x));
+      await setStored({ sourceSettings });
+      renderHotCards();
+    });
+
     list.appendChild(li);
   });
 }
 
-async function loadHotForSource(source) {
+function renderHotCards() {
+  const wrap = qs('hotCards');
+  const enabledSources = getEnabledSources();
+  if (!enabledSources.length) {
+    wrap.innerHTML = '<div class="empty">请至少开启一个数据源。</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  enabledSources.forEach((source) => {
+    const card = document.createElement('article');
+    card.className = 'hot-card';
+    const items = sourceCache[source.id] || FALLBACK_ITEMS[source.id];
+    const rows = items.slice(0, 8).map((item, idx) => `<li><span class="rank">${idx + 1}</span><a href="${item.url}" target="_blank" rel="noreferrer noopener">${item.title}</a></li>`).join('');
+    card.innerHTML = `
+      <div class="hot-card-head">
+        <h3>${source.name}</h3>
+        <a href="${source.siteUrl}" target="_blank" rel="noreferrer noopener">官网</a>
+      </div>
+      <ol>${rows}</ol>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+async function loadOneSource(source) {
   try {
-    const items = await source.fetcher();
-    sourceCache[source.id] = items.length ? items : FALLBACK_BY_SOURCE[source.id];
+    const res = await fetch(source.fetchUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error(String(res.status));
+    const text = await res.text();
+    const parsed = parseJinaLinks(text, source.siteUrl);
+    sourceCache[source.id] = parsed.length ? parsed : FALLBACK_ITEMS[source.id];
   } catch {
-    sourceCache[source.id] = FALLBACK_BY_SOURCE[source.id];
+    sourceCache[source.id] = FALLBACK_ITEMS[source.id];
   }
 }
 
 async function loadAllHot() {
-  qs('hotList').innerHTML = '<li class="hot-item"><span class="rank">…</span><span>正在抓取多个门户热榜</span><span class="source-tag">加载中</span></li>';
-  await Promise.all(PORTAL_SOURCES.map(loadHotForSource));
-  const active = PORTAL_SOURCES.find((s) => s.id === activeSource);
-  renderHotList(sourceCache[activeSource], active.name);
+  qs('hotCards').innerHTML = '<div class="empty">正在抓取门户热点...</div>';
+  const enabled = getEnabledSources();
+  await Promise.all(enabled.map(loadOneSource));
+  renderHotCards();
 }
 
 function renderCountdown(c) {
   const out = qs('countdownResult');
-  if (!c?.title || !c?.date) {
-    out.textContent = '暂无倒数日';
-    return;
-  }
+  if (!c?.title || !c?.date) return (out.textContent = '暂无倒数日');
   const target = new Date(`${c.date}T00:00:00`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -175,10 +228,8 @@ function renderLinks(links) {
   });
 }
 
-qs('refreshHot').addEventListener('click', async () => {
-  await loadAllHot();
-  renderTabs();
-});
+qs('refreshHot').addEventListener('click', loadAllHot);
+qs('toggleConfig').addEventListener('click', () => qs('sourceConfig').classList.toggle('hidden'));
 qs('countdownForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const countdown = { title: qs('countdownTitle').value.trim(), date: qs('countdownDate').value };
@@ -203,8 +254,9 @@ qs('resetLinks').addEventListener('click', async () => {
 });
 
 (async function init() {
-  const { countdown, todos = [], links = DEFAULT_LINKS } = await getStored(['countdown', 'todos', 'links']);
-  renderTabs();
+  const { countdown, todos = [], links = DEFAULT_LINKS, sourceSettings: saved } = await getStored(['countdown', 'todos', 'links', 'sourceSettings']);
+  normalizeSettings(saved);
+  renderSourceConfig();
   renderCountdown(countdown);
   renderTodos(todos);
   renderLinks(links);
