@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyTab Portal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg mesh"></div>
+    <main class="app-shell">
+      <header class="hero glass">
+        <div>
+          <h1>MyTab Portal</h1>
+          <p>今日热榜风格 · 多门户卡片流 · 可配置开关 + 拖拽排序</p>
+        </div>
+        <div class="hero-time">
+          <div id="today" class="today"></div>
+          <div id="clock" class="clock"></div>
+        </div>
+      </header>
+
+      <section class="layout-grid">
+        <section class="main-column">
+          <article class="glass panel">
+            <div class="panel-head">
+              <h2>热点聚合卡片墙</h2>
+              <div class="actions">
+                <button id="refreshHot" class="btn primary">刷新全部</button>
+                <button id="toggleConfig" class="btn ghost">源配置</button>
+              </div>
+            </div>
+            <p class="panel-tip">展示所有启用数据源，排序由「源配置」拖拽决定。</p>
+            <div id="hotCards" class="hot-cards"></div>
+          </article>
+        </section>
+
+        <aside class="side-column">
+          <article id="sourceConfig" class="glass panel hidden">
+            <div class="panel-head"><h2>数据源配置</h2></div>
+            <p class="panel-tip">✅ 启用/停用 · ☰ 拖拽排序（从上到下）</p>
+            <ul id="sourceConfigList" class="source-config-list"></ul>
+          </article>
+
+          <article class="glass panel">
+            <div class="panel-head"><h2>倒数日</h2></div>
+            <form id="countdownForm" class="row-form">
+              <input id="countdownTitle" maxlength="30" required placeholder="目标名称" />
+              <input id="countdownDate" type="date" required />
+              <button class="btn primary" type="submit">保存</button>
+            </form>
+            <div id="countdownResult" class="countdown-value">暂无倒数日</div>
+          </article>
+
+          <article class="glass panel">
+            <div class="panel-head"><h2>待办事项</h2></div>
+            <form id="todoForm" class="row-form">
+              <input id="todoInput" maxlength="80" required placeholder="添加一条待办" />
+              <button class="btn primary" type="submit">添加</button>
+            </form>
+            <ul id="todoList" class="todo-list"></ul>
+          </article>
+
+          <article class="glass panel">
+            <div class="panel-head">
+              <h2>快捷图标卡</h2>
+              <button id="resetLinks" class="btn ghost">重置</button>
+            </div>
+            <div id="linkGrid" class="link-grid"></div>
+          </article>
+        </aside>
+      </section>
+    </main>
+
+    <template id="todoItemTemplate">
+      <li class="todo-item">
+        <label><input type="checkbox" /><span></span></label>
+        <button class="btn danger" type="button">删除</button>
+      </li>
+    </template>
+
+    <template id="linkCardTemplate">
+      <a class="link-card" target="_blank" rel="noreferrer noopener">
+        <span class="link-badge"></span>
+        <span class="link-title"></span>
+      </a>
+    </template>
+
+    <script type="module" src="newtab.js"></script>
+  </body>
+</html>
