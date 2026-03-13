@@ -1,0 +1,28 @@
+name: Build Browser Extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest exists
+        run: test -f manifest.json
+
+      - name: Package extension
+        run: |
+          mkdir -p dist
+          zip -r dist/mytab-lite.zip manifest.json newtab.html newtab.js styles.css
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mytab-lite
+          path: dist/mytab-lite.zip

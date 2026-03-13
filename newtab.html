@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyTab Lite</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="hero card">
+        <div>
+          <h1>MyTab Lite</h1>
+          <p>一个简洁的新标签页：热点 + 倒数日 + 待办 + 快捷图标卡。</p>
+        </div>
+        <div id="clock" class="clock" aria-label="当前时间">--:--</div>
+      </header>
+
+      <section class="grid">
+        <article class="card hot-list">
+          <div class="card-title-row">
+            <h2>TopHub 热榜（单数据源）</h2>
+            <button id="refreshHot" class="btn">刷新</button>
+          </div>
+          <p class="hint">默认抓取 TopHub 页面；若网络受限，会回退到内置示例数据。</p>
+          <ul id="hotList"></ul>
+        </article>
+
+        <article class="card countdown">
+          <h2>倒数日</h2>
+          <form id="countdownForm" class="inline-form">
+            <input id="countdownTitle" required maxlength="32" placeholder="例如：发布日" />
+            <input id="countdownDate" required type="date" />
+            <button class="btn" type="submit">保存</button>
+          </form>
+          <div id="countdownResult" class="result">暂无倒数日</div>
+        </article>
+
+        <article class="card todo">
+          <h2>待办事项</h2>
+          <form id="todoForm" class="inline-form">
+            <input id="todoInput" required maxlength="80" placeholder="输入待办并回车" />
+            <button class="btn" type="submit">添加</button>
+          </form>
+          <ul id="todoList"></ul>
+        </article>
+
+        <article class="card links">
+          <div class="card-title-row">
+            <h2>图标卡（快捷导航）</h2>
+            <button id="resetLinks" class="btn ghost">重置默认</button>
+          </div>
+          <p class="hint">支持编辑名称和链接，自动保存在本地。</p>
+          <div id="linkGrid" class="link-grid"></div>
+        </article>
+      </section>
+    </main>
+
+    <template id="todoItemTemplate">
+      <li class="todo-item">
+        <label>
+          <input type="checkbox" />
+          <span></span>
+        </label>
+        <button class="btn danger" type="button">删除</button>
+      </li>
+    </template>
+
+    <template id="linkCardTemplate">
+      <a class="link-card" target="_blank" rel="noreferrer"></a>
+    </template>
+
+    <script src="newtab.js" type="module"></script>
+  </body>
+</html>
