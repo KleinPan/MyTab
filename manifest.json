@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "MyTab Lite",
+  "version": "0.1.0",
+  "description": "A lightweight iTab-style new tab page with TopHub-style hot list, countdown, todo and icon cards.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://r.jina.ai/*",
+    "https://tophub.today/*"
+  ]
+}
